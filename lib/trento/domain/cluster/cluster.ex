@@ -36,42 +36,34 @@ defmodule Trento.Domain.Cluster do
     HostChecksExecutionCompleted
   }
 
-  @derive Jason.Encoder
-  defstruct [
-    :cluster_id,
-    :name,
-    :type,
-    :sid,
-    :details,
-    :resources_number,
-    :hosts_number,
-    :provider,
-    :discovered_health,
-    :checks_health,
-    health: :unknown,
-    hosts: [],
-    selected_checks: [],
-    hosts_executions: [],
-    checks_execution: :not_running,
-    rolling_up: false
-  ]
+  @required_fields []
 
-  @type t :: %__MODULE__{
-          cluster_id: String.t(),
-          name: String.t(),
-          type: :hana_scale_up | :hana_scale_out | :unknown,
-          provider: :azure | :aws | :gcp | :kvm | :nutanix | :unknown,
-          discovered_health: nil | :passing | :warning | :critical | :unknown,
-          checks_health: nil | :passing | :warning | :critical | :unknown,
-          health: :passing | :warning | :critical | :unknown,
-          sid: String.t(),
-          details: HanaClusterDetails.t() | nil,
-          hosts: [String.t()],
-          selected_checks: [String.t()],
-          hosts_executions: [HostExecution.t()],
-          checks_execution: :not_running | :requested | :running,
-          rolling_up: boolean()
-        }
+  use Trento.Type
+
+  deftype do
+    field :cluster_id, Ecto.UUID
+    field :host_id, Ecto.UUID
+    field :name, :string
+    field :type, Ecto.Enum, values: [:hana_scale_up, :hana_scale_out, :unknown]
+    field :sid, :string
+    field :resources_number, :integer
+    field :hosts_number, :integer
+    field :provider, Ecto.Enum, values: [:azure, :aws, :gcp, :kvm, :nutanix, :unknown]
+    field :discovered_health, Ecto.Enum, values: [:passing, :warning, :critical, :unknown]
+    field :checks_health, Ecto.Enum, values: [:passing, :warning, :critical, :unknown]
+    field :health, Ecto.Enum, values: [:passing, :warning, :critical, :unknown], default: :unknown
+    field :hosts, {:array, :string}, default: []
+    field :selected_checks, {:array, :string}, default: []
+
+    field :checks_execution, Ecto.Enum,
+      values: [:not_running, :requested, :running],
+      default: :not_running
+
+    field :rolling_up, :boolean, default: false
+
+    embeds_one :details, HanaClusterDetails
+    embeds_many :hosts_executions, HostExecution
+  end
 
   def execute(%Cluster{rolling_up: false}, %AbortClusterRollup{}),
     do: []
