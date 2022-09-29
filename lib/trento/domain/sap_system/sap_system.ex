@@ -28,24 +28,20 @@ defmodule Trento.Domain.SapSystem do
     SapSystemRegistered
   }
 
-  alias Trento.Domain.Health
   alias Trento.Domain.HealthService
 
-  defstruct [
-    :sap_system_id,
-    :sid,
-    :database,
-    :application,
-    health: :unknown
-  ]
+  @required_fields []
 
-  @type t :: %__MODULE__{
-          sap_system_id: String.t(),
-          sid: String.t(),
-          database: Database,
-          application: Application,
-          health: Health.t()
-        }
+  use Trento.Type
+
+  deftype do
+    field :sap_system_id, :string
+    field :sid, :string
+    field :health, Ecto.Enum, values: [:passing, :warning, :critical, :unknown]
+
+    embeds_one :database, Database
+    embeds_one :application, Application
+  end
 
   # First time that a Database instance is registered, the SAP System starts its registration process.
   # When an Application is discovered, the SAP System completes the registration process.
